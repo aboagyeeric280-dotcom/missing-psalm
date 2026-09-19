@@ -29,6 +29,9 @@ function precacheServiceWorker(): Plugin {
 }
 
 export default defineConfig({
+  // GitHub Pages hosts this repository below /missing-psalm/.
+  // The environment override keeps local development and other hosts at /.
+  base: process.env.GITHUB_PAGES === 'true' ? '/missing-psalm/' : '/',
   plugins: [react(), precacheServiceWorker()],
   test: {
     environment: 'jsdom',
