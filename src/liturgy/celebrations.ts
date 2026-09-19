@@ -22,6 +22,15 @@ export interface Celebration {
   note?: string
 }
 
+/** Stable data key for a named celebration across calendar years. */
+export function celebrationIdFor(name: string): string {
+  return name
+    .normalize('NFKD')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 type FixedTable = Record<string, Celebration>
 
 /** Keyed by MM-DD. */

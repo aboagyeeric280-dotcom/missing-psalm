@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { resolveLiturgicalDay } from '../liturgy/calendar'
+import { celebrationIdFor, easterFor } from '../liturgy/celebrations'
 import { resolveOffice } from './resolve'
 import { EMPTY_CONTENT, type Entry } from './types'
 
@@ -176,6 +177,99 @@ describe('self-check 4: the four sections resolve independently', () => {
       expect(section.present).toBe(false)
       expect(section.entry).toBeUndefined()
     }
+  })
+})
+
+describe('celebration keys', () => {
+  it('repeats a fixed memorial every year on its annual date', () => {
+    const memorial = entry({
+      keyType: 'celebration',
+      hour: 'morning',
+      celebrationName: 'Saint Thérèse of the Child Jesus',
+      celebrationRank: 'memorial',
+      calendarScope: 'general',
+      celebrationMonth: 10,
+      celebrationDay: 1,
+      responsory: 'Annual memorial responsory.',
+    })
+
+    const first = resolveOffice([memorial], resolveLiturgicalDay('2026-10-01'), 'morning')
+    const nextYear = resolveOffice([memorial], resolveLiturgicalDay('2027-10-01'), 'morning')
+    const nextDay = resolveOffice([memorial], resolveLiturgicalDay('2027-10-02'), 'morning')
+
+    expect(first.sections.responsory.entry?.id).toBe(memorial.id)
+    expect(nextYear.sections.responsory.entry?.id).toBe(memorial.id)
+    expect(nextDay.sections.responsory.present).toBe(false)
+  })
+
+  it('follows a recognised movable celebration from year to year', () => {
+    const easter = entry({
+      keyType: 'celebration',
+      hour: 'morning',
+      celebrationId: celebrationIdFor('Easter Sunday of the Resurrection of the Lord'),
+      celebrationName: 'Easter Sunday of the Resurrection of the Lord',
+      celebrationRank: 'solemnity',
+      calendarScope: 'general',
+      intercessions: 'Easter intercessions.',
+    })
+
+    const in2026 = resolveOffice([easter], resolveLiturgicalDay(easterFor(2026)), 'morning')
+    const in2027 = resolveOffice([easter], resolveLiturgicalDay(easterFor(2027)), 'morning')
+
+    expect(in2026.sections.intercessions.entry?.id).toBe(easter.id)
+    expect(in2027.sections.intercessions.entry?.id).toBe(easter.id)
+  })
+
+  it('uses exact date, celebration, week and psalter in that order, section by section', () => {
+    const day = resolveLiturgicalDay('2026-06-29')
+    expect(day.celebration?.name).toBe('Saints Peter and Paul, Apostles')
+
+    const entries = [
+      entry({
+        keyType: 'psalter',
+        hour: 'morning',
+        season: day.season,
+        psalterWeek: day.psalterWeek,
+        weekday: day.weekday,
+        readingText: 'Psalter reading.',
+        responsory: 'Psalter responsory.',
+        intercessions: 'Psalter intercessions.',
+        concludingPrayer: 'Psalter prayer.',
+      }),
+      entry({
+        keyType: 'week',
+        hour: 'morning',
+        season: day.season,
+        weekOfSeason: day.weekOfSeason,
+        concludingPrayer: 'Week prayer.',
+      }),
+      entry({
+        keyType: 'celebration',
+        hour: 'morning',
+        celebrationId: celebrationIdFor(day.celebration!.name),
+        celebrationName: day.celebration!.name,
+        celebrationRank: 'solemnity',
+        calendarScope: 'general',
+        readingText: 'Celebration reading.',
+        responsory: 'Celebration responsory.',
+      }),
+      entry({
+        keyType: 'date',
+        hour: 'morning',
+        date: day.date,
+        readingText: 'Exact-date reading.',
+      }),
+    ]
+
+    const office = resolveOffice(entries, day, 'morning')
+    expect(office.sections.reading.keyType).toBe('date')
+    expect(office.sections.responsory.keyType).toBe('celebration')
+    expect(office.sections.intercessions.keyType).toBe('psalter')
+    expect(office.sections.concludingPrayer.keyType).toBe('week')
+    expect(office.sections.reading.overridden.map((item) => item.keyType)).toEqual([
+      'celebration',
+      'psalter',
+    ])
   })
 })
 

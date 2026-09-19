@@ -38,6 +38,8 @@ function entryText(entry: Entry): string {
     entry.responsory,
     entry.intercessions,
     entry.concludingPrayer,
+    entry.celebrationName ?? '',
+    entry.celebrationRank ?? '',
     entry.note ?? '',
   ]
     .join(' \n ')
@@ -47,7 +49,13 @@ function entryText(entry: Entry): string {
 function sortKey(entry: Entry): string {
   const seasonIndex = entry.season ? SEASONS.indexOf(entry.season) : 9
   return [
-    entry.keyType === 'date' ? '0' : entry.keyType === 'week' ? '1' : '2',
+    entry.keyType === 'date'
+      ? '0'
+      : entry.keyType === 'celebration'
+        ? '1'
+        : entry.keyType === 'week'
+          ? '2'
+          : '3',
     entry.date ?? '',
     String(seasonIndex),
     String(entry.weekOfSeason ?? entry.psalterWeek ?? 0).padStart(2, '0'),

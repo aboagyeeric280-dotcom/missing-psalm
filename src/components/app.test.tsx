@@ -139,6 +139,40 @@ describe('adding and overriding sections through the interface', () => {
     expect(dialog().getByText(/applies only to the 1st week in Ordinary Time/)).toBeInTheDocument()
   })
 
+  it('saves a memorial as an annual celebration and shows it the next year', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    setDate('2026-10-01')
+
+    await user.click(screen.getByRole('button', { name: /Add the responsory/i }))
+    await user.type(dialog().getByLabelText('Responsory'), 'A memorial responsory.')
+    await user.click(dialog().getByRole('radio', { name: /this celebration each year/i }))
+    await user.type(dialog().getByLabelText('Celebration name'), 'Saint Thérèse of the Child Jesus')
+    expect(dialog().getByLabelText('Rank')).toHaveValue('memorial')
+    expect(dialog().getByLabelText('Month')).toHaveValue('10')
+    expect(dialog().getByLabelText('Day')).toHaveValue(1)
+    await user.click(dialog().getByRole('button', { name: /save responsory/i }))
+
+    expect(await screen.findByText('A memorial responsory.')).toBeInTheDocument()
+    expect(screen.getByText('Memorial')).toBeInTheDocument()
+
+    setDate('2027-10-01')
+    expect(await screen.findByText('A memorial responsory.')).toBeInTheDocument()
+    expect(screen.getAllByText(/Saint Thérèse of the Child Jesus/).length).toBeGreaterThan(0)
+  })
+
+  it('suggests a celebration key for a recognised solemnity', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    setDate('2026-06-29')
+
+    await user.click(screen.getAllByRole('button', { name: /^Add the /i })[0])
+    expect(dialog().getByRole('radio', { name: /this celebration each year.*suggested/i })).toBeChecked()
+    expect(dialog().getByLabelText('Celebration name')).toHaveValue('Saints Peter and Paul, Apostles')
+    expect(dialog().getByLabelText('Rank')).toHaveValue('solemnity')
+    expect(dialog().getByText(/date will move automatically/i)).toBeInTheDocument()
+  })
+
   it('writes to the original storage key', async () => {
     const user = userEvent.setup()
     render(<App />)
@@ -149,7 +183,7 @@ describe('adding and overriding sections through the interface', () => {
 
     const raw = window.localStorage.getItem(STORAGE_KEY)
     expect(raw).toContain('Stored text.')
-    expect(JSON.parse(raw!).schemaVersion).toBe(2)
+    expect(JSON.parse(raw!).schemaVersion).toBe(3)
   })
 })
 

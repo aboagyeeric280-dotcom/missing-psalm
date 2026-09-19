@@ -202,6 +202,10 @@ export function OverviewScreen({ onOpenDay }: OverviewScreenProps) {
                 </tr>
               ))}
               <tr>
+                <th scope="row">Celebrations</th>
+                <td>{file.entries.filter((entry) => entry.keyType === 'celebration').length}</td>
+              </tr>
+              <tr>
                 <th scope="row">Exact dates</th>
                 <td>{file.entries.filter((entry) => entry.keyType === 'date').length}</td>
               </tr>
@@ -232,8 +236,9 @@ export function OverviewScreen({ onOpenDay }: OverviewScreenProps) {
         </h3>
         {upcoming.length === 0 ? (
           <p className="small muted">
-            Nothing dated from today onwards. Days such as 17–24 December, the Christmas octave, solemnities and
-            feasts are usually stored as exact dates.
+            Nothing dated from today onwards. Exact dates are best for 17–24 December, the Christmas octave, and
+            celebrations transferred in a particular year; recurring memorials, feasts and solemnities can use a
+            celebration entry instead.
           </p>
         ) : (
           <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>

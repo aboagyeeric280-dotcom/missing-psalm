@@ -7,7 +7,14 @@ import {
   todayISO,
 } from '../liturgy/dates'
 import { COLOUR_NAMES, resolveLiturgicalDay } from '../liturgy/calendar'
-import { HOURS, HOUR_META, SECTIONS, type Hour, type SectionId } from '../data/types'
+import {
+  CELEBRATION_RANK_LABELS,
+  HOURS,
+  HOUR_META,
+  SECTIONS,
+  type Hour,
+  type SectionId,
+} from '../data/types'
 import { resolveOffice } from '../data/resolve'
 import { useAppState } from '../state/store'
 import { announce } from '../state/announce'
@@ -27,6 +34,7 @@ export function LookupScreen({ date, hour, onDateChange, onHourChange }: LookupS
 
   const day = useMemo(() => resolveLiturgicalDay(date), [date])
   const office = useMemo(() => resolveOffice(file.entries, day, hour), [file.entries, day, hour])
+  const storedCelebration = office.candidates.celebration[0]
   const today = todayISO()
   const missing = SECTIONS.filter((section) => !office.sections[section].present)
 
@@ -124,6 +132,17 @@ export function LookupScreen({ date, hour, onDateChange, onHourChange }: LookupS
             <dt>Hour</dt>
             <dd>{HOUR_META[hour].description}</dd>
           </div>
+          {!day.celebration && storedCelebration?.celebrationName ? (
+            <div>
+              <dt>Celebration</dt>
+              <dd>
+                {storedCelebration.celebrationName}
+                {storedCelebration.celebrationRank
+                  ? ` · ${CELEBRATION_RANK_LABELS[storedCelebration.celebrationRank]}`
+                  : ''}
+              </dd>
+            </div>
+          ) : null}
         </dl>
         {day.notes.length > 0 ? (
           <div className="note">

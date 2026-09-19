@@ -25,6 +25,8 @@ const CHECKS = [
 
 const work = mkdtempSync(join(tmpdir(), 'missing-parts-selfcheck-'))
 const results = new Map() // check number -> { passed, failed }
+const VITEST_CLI = join(process.cwd(), 'node_modules', 'vitest', 'vitest.mjs')
+const PLAYWRIGHT_CLI = join(process.cwd(), 'node_modules', '@playwright', 'test', 'cli.js')
 
 function claim(title, ok) {
   const match = /self-check (\d+)/i.exec(title)
@@ -46,7 +48,7 @@ function run(command, args) {
 
 // --- unit and component tests -------------------------------------------------
 const vitestOut = join(work, 'vitest.json')
-const vitestOk = run('npx', ['vitest', 'run', '--reporter=json', `--outputFile=${vitestOut}`])
+const vitestOk = run(process.execPath, [VITEST_CLI, 'run', '--reporter=json', `--outputFile=${vitestOut}`])
 const vitest = JSON.parse(readFileSync(vitestOut, 'utf8'))
 for (const file of vitest.testResults ?? []) {
   for (const test of file.assertionResults ?? []) {
@@ -59,7 +61,7 @@ let playwrightOk = true
 let playwright = { suites: [] }
 try {
   playwright = JSON.parse(
-    execFileSync('npx', ['playwright', 'test', '--reporter=json'], {
+    execFileSync(process.execPath, [PLAYWRIGHT_CLI, 'test', '--reporter=json'], {
       encoding: 'utf8',
       maxBuffer: 64 * 1024 * 1024,
       stdio: ['ignore', 'pipe', 'pipe'],

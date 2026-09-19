@@ -41,6 +41,23 @@ test.describe('core workflows', () => {
     await expect(page.getByText('Stored across reloads.')).toBeVisible()
   })
 
+  test('stores a memorial as an annual celebration', async ({ page }) => {
+    await page.goto('/')
+    await setDate(page, '2026-10-01')
+    await page.getByRole('button', { name: /Add the responsory/i }).click()
+    const dialog = page.getByRole('dialog')
+    await dialog.getByLabel('Responsory').fill('Annual memorial responsory.')
+    await dialog.getByRole('radio', { name: /This celebration each year/i }).click()
+    await dialog.getByLabel('Celebration name').fill('Saint Thérèse of the Child Jesus')
+    await dialog.getByRole('button', { name: /Save responsory/i }).click()
+
+    await expect(page.getByText('Annual memorial responsory.')).toBeVisible()
+    await expect(page.getByText('Memorial', { exact: true })).toBeVisible()
+
+    await setDate(page, '2027-10-01')
+    await expect(page.getByText('Annual memorial responsory.')).toBeVisible()
+  })
+
   test('every screen is reachable and renders', async ({ page }) => {
     await page.goto('/')
     for (const name of ['Library', 'Progress', 'Backup', 'Lookup']) {

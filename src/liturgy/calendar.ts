@@ -68,7 +68,7 @@ export interface LiturgicalDay {
   isSunday: boolean
   isLateAdvent: boolean
   isChristmasOctave: boolean
-  /** True when the day normally has proper texts, so an exact-date entry fits best. */
+  /** True when the day normally has proper texts. */
   prefersExactDate: boolean
   notes: string[]
 }
@@ -289,7 +289,7 @@ export function resolveLiturgicalDay(iso: ISODate): LiturgicalDay {
     notes.push('Days in the Christmas octave have proper texts. An exact-date entry is usually the right choice.')
   } else if (celebration) {
     notes.push(
-      `${celebration.rank === 'solemnity' ? 'Solemnities' : 'Feasts'} have proper texts. An exact-date entry is usually the right choice.`,
+      `${celebration.rank === 'solemnity' ? 'Solemnities' : 'Feasts'} have proper texts. A celebration entry can follow this observance from year to year; use an exact date for a one-year transfer.`,
     )
   }
 

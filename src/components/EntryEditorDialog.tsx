@@ -6,6 +6,7 @@ import {
   SECTIONS,
   SECTION_META,
   entryIsEmpty,
+  isValidAnnualDate,
   type Entry,
   type EntryContent,
 } from '../data/types'
@@ -31,6 +32,12 @@ export function EntryEditorDialog({ entry, onClose }: EntryEditorDialogProps) {
     psalterWeek: entry.psalterWeek ?? fallback.psalterWeek,
     weekday: entry.weekday ?? fallback.weekday,
     weekOfSeason: entry.weekOfSeason ?? fallback.weekOfSeason,
+    celebrationId: entry.celebrationId ?? '',
+    celebrationName: entry.celebrationName ?? '',
+    celebrationRank: entry.celebrationRank ?? 'memorial',
+    calendarScope: entry.calendarScope ?? 'general',
+    celebrationMonth: entry.celebrationMonth ?? Number(fallback.date.slice(5, 7)),
+    celebrationDay: entry.celebrationDay ?? Number(fallback.date.slice(8, 10)),
     date: entry.date ?? fallback.date,
   })
   const [content, setContent] = useState<EntryContent>({
@@ -51,10 +58,16 @@ export function EntryEditorDialog({ entry, onClose }: EntryEditorDialogProps) {
       note: note.trim() || undefined,
       keyType: key.keyType,
       hour: key.hour,
-      season: key.keyType === 'date' ? undefined : key.season,
+      season: key.keyType === 'psalter' || key.keyType === 'week' ? key.season : undefined,
       psalterWeek: key.keyType === 'psalter' ? key.psalterWeek : undefined,
       weekday: key.keyType === 'psalter' ? key.weekday : undefined,
       weekOfSeason: key.keyType === 'week' ? key.weekOfSeason : undefined,
+      celebrationId: key.keyType === 'celebration' ? key.celebrationId || undefined : undefined,
+      celebrationName: key.keyType === 'celebration' ? key.celebrationName.trim() : undefined,
+      celebrationRank: key.keyType === 'celebration' ? key.celebrationRank : undefined,
+      calendarScope: key.keyType === 'celebration' ? key.calendarScope : undefined,
+      celebrationMonth: key.keyType === 'celebration' ? key.celebrationMonth : undefined,
+      celebrationDay: key.keyType === 'celebration' ? key.celebrationDay : undefined,
       date: key.keyType === 'date' ? key.date : undefined,
     }
     saveEntry(next)
@@ -63,6 +76,10 @@ export function EntryEditorDialog({ entry, onClose }: EntryEditorDialogProps) {
   }
 
   const empty = entryIsEmpty({ ...entry, ...content })
+  const keyIsComplete =
+    key.keyType !== 'celebration' ||
+    (key.celebrationName.trim().length > 0 &&
+      (key.celebrationId.length > 0 || isValidAnnualDate(key.celebrationMonth, key.celebrationDay)))
 
   return (
     <Dialog
@@ -74,7 +91,12 @@ export function EntryEditorDialog({ entry, onClose }: EntryEditorDialogProps) {
           <button type="button" className="button" onClick={onClose}>
             Cancel
           </button>
-          <button type="button" className="button button--primary" onClick={handleSave} disabled={empty}>
+          <button
+            type="button"
+            className="button button--primary"
+            onClick={handleSave}
+            disabled={empty || !keyIsComplete}
+          >
             Save entry
           </button>
         </>
@@ -91,6 +113,11 @@ export function EntryEditorDialog({ entry, onClose }: EntryEditorDialogProps) {
         <KeyChooser value={key} onChange={setKey} legend="What does this entry apply to?" />
         <p className="small muted">{explainKey(key.keyType, key)}</p>
         <KeyDetails value={key} onChange={setKey} />
+        {!keyIsComplete ? (
+          <p className="small" style={{ color: 'var(--danger)' }}>
+            Give the celebration a name and a valid annual date before saving.
+          </p>
+        ) : null}
 
         {SECTIONS.map((section) => (
           <fieldset key={section}>
