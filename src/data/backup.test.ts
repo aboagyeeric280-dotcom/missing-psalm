@@ -34,25 +34,37 @@ const PRAYER = entry({
   concludingPrayer: 'Prayer for the eighth week.',
 })
 
+const CELEBRATION = entry({
+  id: 'celebration-a',
+  keyType: 'celebration',
+  hour: 'morning',
+  celebrationName: 'Saint Thérèse of the Child Jesus',
+  celebrationRank: 'memorial',
+  calendarScope: 'general',
+  celebrationMonth: 10,
+  celebrationDay: 1,
+  responsory: 'A memorial responsory.',
+})
+
 describe('self-check 6: export then import restores the same data', () => {
   it('round-trips every field', () => {
-    const store = { ...emptyStore(), entries: [READING, PRAYER] }
+    const store = { ...emptyStore(), entries: [READING, PRAYER, CELEBRATION] }
     const json = JSON.stringify(buildBackup(store), null, 2)
 
     const preview = analyseImport(json, [])
     expect(preview.ok).toBe(true)
-    expect(preview.entries).toHaveLength(2)
-    expect(preview.newRecords).toBe(2)
+    expect(preview.entries).toHaveLength(3)
+    expect(preview.newRecords).toBe(3)
 
     const { entries } = applyImport([], preview, { mode: 'replace', conflictWinner: 'imported' })
     expect(entries.map((item) => ({ ...item, updatedAt: '' }))).toEqual(
-      [READING, PRAYER].map((item) => ({ ...item, updatedAt: '' })),
+      [READING, PRAYER, CELEBRATION].map((item) => ({ ...item, updatedAt: '' })),
     )
   })
 
   it('records the schema version and export date', () => {
     const backup = buildBackup({ ...emptyStore(), entries: [READING] }, new Date('2026-09-18T10:00:00Z'))
-    expect(backup.schemaVersion).toBe(2)
+    expect(backup.schemaVersion).toBe(3)
     expect(backup.exportedAt).toBe('2026-09-18T10:00:00.000Z')
     expect(backup.entryCount).toBe(1)
     expect(backup.app).toBe('the-missing-parts')

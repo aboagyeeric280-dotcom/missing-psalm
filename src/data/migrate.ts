@@ -14,15 +14,18 @@ import {
   HOURS,
   KEY_TYPES,
   SECTIONS,
+  isValidAnnualDate,
   sectionHasContent,
   type Entry,
+  type CalendarScope,
+  type CelebrationRank,
   type Hour,
   type KeyType,
   type StoreFile,
   type StoreMeta,
 } from './types'
 
-export const CURRENT_SCHEMA_VERSION = 2
+export const CURRENT_SCHEMA_VERSION = 3
 
 const KNOWN_ENTRY_FIELDS = new Set([
   'id',
@@ -32,6 +35,12 @@ const KNOWN_ENTRY_FIELDS = new Set([
   'psalterWeek',
   'weekday',
   'weekOfSeason',
+  'celebrationId',
+  'celebrationName',
+  'celebrationRank',
+  'calendarScope',
+  'celebrationMonth',
+  'celebrationDay',
   'date',
   'note',
   'source',
@@ -103,6 +112,28 @@ const WEEKDAY_SYNONYMS: Record<string, number> = {
 
 const ROMAN_TO_NUMBER: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4 }
 
+const CELEBRATION_RANK_SYNONYMS: Record<string, CelebrationRank> = {
+  optionalmemorial: 'optionalMemorial',
+  optional: 'optionalMemorial',
+  memorial: 'memorial',
+  obligatorymemorial: 'memorial',
+  feast: 'feast',
+  solemnity: 'solemnity',
+  solemnfeast: 'solemnity',
+}
+
+const CALENDAR_SCOPE_SYNONYMS: Record<string, CalendarScope> = {
+  general: 'general',
+  generalroman: 'general',
+  generalromancalendar: 'general',
+  national: 'national',
+  diocesan: 'diocesan',
+  diocese: 'diocesan',
+  local: 'local',
+  community: 'local',
+  religious: 'local',
+}
+
 function slug(value: unknown): string {
   return String(value ?? '')
     .toLowerCase()
@@ -139,6 +170,12 @@ function parseWeekOfSeason(value: unknown): number | undefined {
   if (!Number.isFinite(asNumber) || !Number.isInteger(asNumber)) return undefined
   if (asNumber < 0 || asNumber > 34) return undefined
   return asNumber
+}
+
+function parseCalendarNumber(value: unknown, minimum: number, maximum: number): number | undefined {
+  if (value === null || value === undefined || value === '') return undefined
+  const parsed = typeof value === 'number' ? value : Number(String(value).trim())
+  return Number.isInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : undefined
 }
 
 function parseDate(value: unknown): ISODate | undefined {
@@ -184,6 +221,12 @@ export function normaliseEntry(raw: unknown, label = 'entry'): NormalisedEntry {
   const psalterWeek = parsePsalterWeek(record.psalterWeek ?? record.psalter ?? record.week)
   const weekday = parseWeekday(record.weekday ?? record.day)
   const weekOfSeason = parseWeekOfSeason(record.weekOfSeason ?? record.seasonWeek)
+  const celebrationId = text(record.celebrationId) || undefined
+  const celebrationName = text(record.celebrationName ?? record.celebration) || undefined
+  const celebrationRank = CELEBRATION_RANK_SYNONYMS[slug(record.celebrationRank ?? record.rank)]
+  const calendarScope = CALENDAR_SCOPE_SYNONYMS[slug(record.calendarScope ?? record.calendar)]
+  const celebrationMonth = parseCalendarNumber(record.celebrationMonth ?? record.month, 1, 12)
+  const celebrationDay = parseCalendarNumber(record.celebrationDay ?? record.dayOfMonth, 1, 31)
   const date = parseDate(record.date)
 
   const declared = KEY_TYPES.includes(record.keyType as KeyType) ? (record.keyType as KeyType) : undefined
@@ -194,6 +237,8 @@ export function normaliseEntry(raw: unknown, label = 'entry'): NormalisedEntry {
     keyType = declared
   } else if (date) {
     keyType = 'date'
+  } else if (celebrationId || (celebrationName && celebrationMonth && celebrationDay)) {
+    keyType = 'celebration'
   } else if (season && psalterWeek && weekday !== undefined) {
     keyType = 'psalter'
   } else if (season && weekOfSeason !== undefined) {
@@ -214,6 +259,12 @@ export function normaliseEntry(raw: unknown, label = 'entry'): NormalisedEntry {
 
   // A key the resolver cannot match is kept, but flagged for the user to fix.
   if (keyType === 'date' && !date) needsReview = true
+  if (
+    keyType === 'celebration' &&
+    (!celebrationName || (!celebrationId && !isValidAnnualDate(celebrationMonth, celebrationDay)))
+  ) {
+    needsReview = true
+  }
   if (keyType === 'week' && (!season || weekOfSeason === undefined)) needsReview = true
   if (keyType === 'psalter' && (!season || !psalterWeek || weekday === undefined)) needsReview = true
 
@@ -236,6 +287,12 @@ export function normaliseEntry(raw: unknown, label = 'entry'): NormalisedEntry {
     ...(psalterWeek ? { psalterWeek } : {}),
     ...(weekday !== undefined ? { weekday } : {}),
     ...(weekOfSeason !== undefined ? { weekOfSeason } : {}),
+    ...(celebrationId ? { celebrationId } : {}),
+    ...(celebrationName ? { celebrationName } : {}),
+    ...(celebrationRank ? { celebrationRank } : {}),
+    ...(calendarScope ? { calendarScope } : {}),
+    ...(celebrationMonth ? { celebrationMonth } : {}),
+    ...(celebrationDay ? { celebrationDay } : {}),
     ...(date ? { date } : {}),
     ...(typeof record.note === 'string' && record.note.trim() ? { note: record.note.trim() } : {}),
     ...(typeof record.source === 'string' && record.source.trim() ? { source: record.source.trim() } : {}),

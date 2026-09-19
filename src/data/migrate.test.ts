@@ -129,4 +129,36 @@ describe('reading damaged or unusual data', () => {
     })
     expect((entry as unknown as { extra: Record<string, unknown> }).extra.somethingNew).toBe('keep me')
   })
+
+  it('normalises celebration records without changing their wording', () => {
+    const { entry, problems } = normaliseEntry({
+      keyType: 'celebration',
+      hour: 'Lauds',
+      celebrationName: 'Saint Thérèse of the Child Jesus',
+      celebrationRank: 'Memorial',
+      calendarScope: 'General Roman Calendar',
+      celebrationMonth: 10,
+      celebrationDay: 1,
+      responsory: 'The exact stored wording.',
+    })
+
+    expect(problems).toEqual([])
+    expect(entry?.keyType).toBe('celebration')
+    expect(entry?.celebrationRank).toBe('memorial')
+    expect(entry?.calendarScope).toBe('general')
+    expect(entry?.celebrationMonth).toBe(10)
+    expect(entry?.celebrationDay).toBe(1)
+    expect(entry?.responsory).toBe('The exact stored wording.')
+  })
+
+  it('keeps a malformed celebration and marks it for review', () => {
+    const { entry } = normaliseEntry({
+      keyType: 'celebration',
+      hour: 'morning',
+      celebrationRank: 'feast',
+      responsory: 'Keep this.',
+    })
+    expect(entry?.responsory).toBe('Keep this.')
+    expect(entry?.needsReview).toBe(true)
+  })
 })
