@@ -1,0 +1,13 @@
+{
+  "name": "The Missing Parts",
+  "short_name": "Missing Parts",
+  "description": "The short reading, responsory, intercessions and concluding prayer for the Liturgy of the Hours, stored on your own device.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#faf7f1",
+  "theme_color": "#faf7f1",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

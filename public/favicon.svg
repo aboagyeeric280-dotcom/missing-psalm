@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="An open book">
+  <rect width="64" height="64" rx="12" fill="#faf7f1"/>
+  <path d="M10 18c7-3 14-3 22 1v30c-8-4-15-4-22-1z" fill="none" stroke="#6b4f7c" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M54 18c-7-3-14-3-22 1v30c8-4 15-4 22-1z" fill="none" stroke="#6b4f7c" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M32 19v30" stroke="#6b4f7c" stroke-width="3" stroke-linecap="round"/>
+</svg>
