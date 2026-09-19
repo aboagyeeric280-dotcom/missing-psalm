@@ -19,6 +19,8 @@ import {
   keyId,
   sectionHasContent,
   type Entry,
+  type CalendarScope,
+  type CelebrationRank,
   type EntryContent,
   type Hour,
   type KeyType,
@@ -99,6 +101,12 @@ export interface EntryKeyInput {
   psalterWeek?: PsalterWeek
   weekday?: number
   weekOfSeason?: number
+  celebrationId?: string
+  celebrationName?: string
+  celebrationRank?: CelebrationRank
+  calendarScope?: CalendarScope
+  celebrationMonth?: number
+  celebrationDay?: number
   date?: ISODate
 }
 
@@ -106,6 +114,17 @@ function keyFields(key: EntryKeyInput): Partial<Entry> {
   switch (key.keyType) {
     case 'date':
       return { keyType: 'date', hour: key.hour, date: key.date }
+    case 'celebration':
+      return {
+        keyType: 'celebration',
+        hour: key.hour,
+        celebrationId: key.celebrationId,
+        celebrationName: key.celebrationName,
+        celebrationRank: key.celebrationRank,
+        calendarScope: key.calendarScope,
+        celebrationMonth: key.celebrationMonth,
+        celebrationDay: key.celebrationDay,
+      }
     case 'week':
       return { keyType: 'week', hour: key.hour, season: key.season, weekOfSeason: key.weekOfSeason }
     case 'psalter':
