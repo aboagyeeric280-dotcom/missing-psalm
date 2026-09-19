@@ -37,7 +37,8 @@ Each record carries a `keyType` that decides when it applies:
 | --- | --- | --- |
 | `psalter` | season + psalter week (I–IV) + weekday + hour | material that repeats every four weeks |
 | `week` | season + week of the season + hour | material belonging to one week, such as a concluding prayer |
-| `date` | exact calendar date + hour | 17–24 December, the Christmas octave, solemnities, feasts, memorials |
+| `celebration` | celebration + rank + calendar + hour | optional memorials, memorials, feasts and solemnities that recur |
+| `date` | exact calendar date + hour | 17–24 December, the Christmas octave and a celebration transferred in one year |
 
 Every record keeps the same content fields: `reference`, `readingText`, `translation`,
 `responsory`, `intercessions`, `concludingPrayer`. The Scripture reference, the reading
@@ -50,7 +51,7 @@ The four sections resolve **independently**, each taking the most specific recor
 actually contains it:
 
 ```
-exact date  >  week of season  >  psalter
+exact date  >  celebration  >  week of season  >  psalter
 ```
 
 A more specific record overrides only the sections it contains. An exact-date record
@@ -59,12 +60,18 @@ concluding prayer, and it never deletes them — they carry on appearing on ever
 day they match. The Lookup screen labels the source of each section and says plainly
 when one record is overriding another.
 
+A fixed celebration repeats on its month and day every year. A celebration already
+recognised by the built-in calendar carries a stable identifier, so a movable observance
+such as Easter follows its calculated date. An exact-date entry still wins when a feast
+or solemnity is transferred in one particular year.
+
 ### Editor defaults
 
 Short reading, responsory and intercessions default to `psalter`; the concluding prayer
-defaults to `week`. On a day that normally has proper texts (17–24 December, a day in
-the Christmas octave, a solemnity or a feast) the editor suggests `date` instead and
-says why. Every choice is explained in plain language — "This will repeat every four
+defaults to `week`. On a recognised feast or solemnity, the editor suggests
+`celebration`; on 17–24 December and days in the Christmas octave it suggests `date`.
+For a memorial not in the built-in calendar, choose **This celebration each year** and
+enter its name, rank, calendar, month and day. Every choice is explained in plain language — "This will repeat every four
 weeks on Monday at Morning, in Ordinary Time" — and the underlying key fields are filled
 in from the date you were looking at. They can still be changed under *Advanced*.
 
@@ -93,11 +100,12 @@ Easter (Gregorian, Meeus/Jones/Butcher), the First Sunday of Advent, and the Bap
 the Lord (the Sunday after 6 January). Ordinary Time is numbered forward from the Baptism
 and backward from the 34th week, which ends before Advent.
 
-The sanctoral covers **solemnities and feasts of the General Roman Calendar** only.
-Memorials are not listed; add an exact-date entry for them. Regional calendars,
+The built-in sanctoral labels **solemnities and feasts of the General Roman Calendar**.
+Memorials are not preloaded, but you can add them as annual celebration entries and mark
+them General, National, Diocesan, or Local/community. Regional calendars,
 transfers of impeded solemnities and local observances are not modelled — where a day is
 commonly transferred (the Epiphany, the Ascension, Corpus Christi) the app says so on the
-day itself.
+day itself. Use an exact-date entry when a celebration is transferred for a particular year.
 
 ## Texts
 

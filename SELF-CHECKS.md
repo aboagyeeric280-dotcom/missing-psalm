@@ -21,6 +21,13 @@ Tests claim a check by carrying `self-check N` in their `describe` title.
 
 Beyond the required ten, the suites also cover:
 
+- annual celebration keys for optional memorials, memorials, feasts and solemnities;
+  fixed celebrations recur on the same month and day, recognised movable celebrations
+  follow their calculated date, and exact-date material takes precedence without hiding
+  unrelated sections (`src/data/resolve.test.ts` and `src/components/app.test.tsx`);
+- schema-version-3 migration and backup round trips for celebration name, rank, calendar
+  scope and annual date (`src/data/migrate.test.ts` and `src/data/backup.test.ts`);
+
 - the liturgical calendar against known dates for Easter, Advent, the Baptism of the
   Lord, Holy Family and Christ the King, and every day across five years for a valid
   season, week and psalter week (`src/liturgy/calendar.test.ts`);

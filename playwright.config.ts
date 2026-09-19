@@ -1,7 +1,11 @@
 import { defineConfig } from '@playwright/test'
 
-/** The container ships one Chromium build; use it rather than downloading another. */
-const CHROMIUM = '/opt/pw-browsers/chromium'
+/** Use the supplied Chromium in containers and installed Chrome on Windows. */
+const CHROMIUM =
+  process.env.PLAYWRIGHT_CHROMIUM_PATH ??
+  (process.platform === 'win32'
+    ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+    : '/opt/pw-browsers/chromium')
 
 /**
  * End-to-end checks run against the production build, because two of the
@@ -40,7 +44,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run preview -- --port 4173 --host 127.0.0.1',
+    command:
+      process.platform === 'win32'
+        ? 'node node_modules/vite/bin/vite.js preview --port 4173 --host 127.0.0.1'
+        : 'npm run preview -- --port 4173 --host 127.0.0.1',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: true,
     timeout: 60_000,
