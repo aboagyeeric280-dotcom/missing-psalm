@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import type { LiturgicalDay } from '../liturgy/calendar'
 import { formatDateOnly } from '../liturgy/dates'
+import { celebrationIdFor } from '../liturgy/celebrations'
 import {
   EMPTY_CONTENT,
   HOUR_META,
   SECTION_META,
+  isValidAnnualDate,
   sectionHasContent,
   type Entry,
   type EntryContent,
@@ -36,6 +38,12 @@ function draftFromDay(day: LiturgicalDay, hour: Hour, keyType: KeyType): KeyDraf
     psalterWeek: day.psalterWeek,
     weekday: day.weekday,
     weekOfSeason: day.weekOfSeason,
+    celebrationId: day.celebration ? celebrationIdFor(day.celebration.name) : '',
+    celebrationName: day.celebration?.name ?? '',
+    celebrationRank: day.celebration?.rank ?? 'memorial',
+    calendarScope: 'general',
+    celebrationMonth: Number(day.date.slice(5, 7)),
+    celebrationDay: Number(day.date.slice(8, 10)),
     date: day.date,
   }
 }
@@ -49,7 +57,8 @@ function contentOf(entry: Entry | undefined): EntryContent {
 export function SectionEditorDialog({ section, day, hour, currentEntry, onClose }: SectionEditorDialogProps) {
   const meta = SECTION_META[section]
   const initialKeyType: KeyType =
-    currentEntry?.keyType ?? (day.prefersExactDate ? 'date' : meta.defaultKeyType)
+    currentEntry?.keyType ??
+    (day.celebration ? 'celebration' : day.prefersExactDate ? 'date' : meta.defaultKeyType)
 
   const [key, setKey] = useState<KeyDraft>(() => {
     const base = draftFromDay(day, hour, initialKeyType)
@@ -62,6 +71,12 @@ export function SectionEditorDialog({ section, day, hour, currentEntry, onClose 
       psalterWeek: currentEntry.psalterWeek ?? base.psalterWeek,
       weekday: currentEntry.weekday ?? base.weekday,
       weekOfSeason: currentEntry.weekOfSeason ?? base.weekOfSeason,
+      celebrationId: currentEntry.celebrationId ?? base.celebrationId,
+      celebrationName: currentEntry.celebrationName ?? base.celebrationName,
+      celebrationRank: currentEntry.celebrationRank ?? base.celebrationRank,
+      calendarScope: currentEntry.calendarScope ?? base.calendarScope,
+      celebrationMonth: currentEntry.celebrationMonth ?? base.celebrationMonth,
+      celebrationDay: currentEntry.celebrationDay ?? base.celebrationDay,
       date: currentEntry.date ?? base.date,
     }
   })
@@ -102,6 +117,10 @@ export function SectionEditorDialog({ section, day, hour, currentEntry, onClose 
   }
 
   const hasText = SECTION_META[section].fields.some((field) => (content[field] ?? '').trim().length > 0)
+  const keyIsComplete =
+    key.keyType !== 'celebration' ||
+    (key.celebrationName.trim().length > 0 &&
+      (key.celebrationId.length > 0 || isValidAnnualDate(key.celebrationMonth, key.celebrationDay)))
 
   return (
     <>
@@ -123,7 +142,12 @@ export function SectionEditorDialog({ section, day, hour, currentEntry, onClose 
                 Remove this section
               </button>
             ) : null}
-            <button type="button" className="button button--primary" onClick={handleSave} disabled={!hasText}>
+            <button
+              type="button"
+              className="button button--primary"
+              onClick={handleSave}
+              disabled={!hasText || !keyIsComplete}
+            >
               Save {meta.label.toLowerCase()}
             </button>
           </>
@@ -140,9 +164,31 @@ export function SectionEditorDialog({ section, day, hour, currentEntry, onClose 
             autoFocus
           />
 
-          <KeyChooser value={key} onChange={changeKey} recommendDate={day.prefersExactDate} />
+          <KeyChooser
+            value={key}
+            onChange={changeKey}
+            recommendDate={day.prefersExactDate && !day.celebration}
+            recommendCelebration={Boolean(day.celebration)}
+          />
 
-          {day.prefersExactDate && key.keyType !== 'date' ? (
+          {key.keyType === 'celebration' ? (
+            <>
+              <KeyDetails value={key} onChange={changeKey} showHour={false} />
+              {!keyIsComplete ? (
+                <p className="small" style={{ color: 'var(--danger)' }}>
+                  Give the celebration a name and a valid annual date before saving.
+                </p>
+              ) : null}
+            </>
+          ) : null}
+
+          {day.celebration && key.keyType !== 'celebration' && key.keyType !== 'date' ? (
+            <p className="notice notice--info">
+              <strong className="notice__title">Today is {day.celebration.name}</strong>
+              A celebration entry can return whenever this celebration occurs. Use an exact date instead for a
+              one-year transfer.
+            </p>
+          ) : day.prefersExactDate && key.keyType !== 'date' && key.keyType !== 'celebration' ? (
             <p className="notice notice--info">
               <strong className="notice__title">Today has proper texts</strong>
               {day.title} normally has its own material. An exact-date entry keeps the recurring psalter
@@ -152,7 +198,7 @@ export function SectionEditorDialog({ section, day, hour, currentEntry, onClose 
 
           {key.keyType === 'date' ? (
             <p className="small muted">
-              Saving this does not delete anything. Any psalter or week material for {formatDateOnly(key.date)}
+              Saving this does not delete anything. Any celebration, psalter or week material for {formatDateOnly(key.date)}
               {' '}stays exactly as it is and keeps appearing on other days.
             </p>
           ) : null}
@@ -165,14 +211,16 @@ export function SectionEditorDialog({ section, day, hour, currentEntry, onClose 
             </p>
           ) : null}
 
-          <details className="advanced">
-            <summary>Advanced: change what this is keyed to</summary>
-            <p className="small muted">
-              These are filled in from the date you were looking at. Change them only if you want this to apply
-              somewhere else.
-            </p>
-            <KeyDetails value={key} onChange={changeKey} />
-          </details>
+          {key.keyType !== 'celebration' ? (
+            <details className="advanced">
+              <summary>Advanced: change what this is keyed to</summary>
+              <p className="small muted">
+                These are filled in from the date you were looking at. Change them only if you want this to apply
+                somewhere else.
+              </p>
+              <KeyDetails value={key} onChange={changeKey} />
+            </details>
+          ) : null}
         </div>
       </Dialog>
 

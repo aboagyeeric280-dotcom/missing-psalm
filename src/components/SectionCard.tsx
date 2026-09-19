@@ -1,8 +1,14 @@
 import { ROMAN_WEEK, WEEKDAY_NAMES, formatDateOnly } from '../liturgy/dates'
 import { SEASON_NAMES, weekLabelFor } from '../liturgy/calendar'
-import { SECTION_META, type Entry, type SectionId } from '../data/types'
+import {
+  CALENDAR_SCOPE_LABELS,
+  CELEBRATION_RANK_LABELS,
+  SECTION_META,
+  type Entry,
+  type SectionId,
+} from '../data/types'
 import type { SectionResolution } from '../data/resolve'
-import { describeKey } from '../data/resolve'
+import { describeKey, formatAnnualDate } from '../data/resolve'
 
 /** Where a section came from, in words rather than by colour alone. */
 function sourceSummary(entry: Entry): { badge: string; detail: string; className: string } {
@@ -21,6 +27,20 @@ function sourceSummary(entry: Entry): { badge: string; detail: string; className
             ? `${weekLabelFor(entry.season, entry.weekOfSeason)} — repeats each year in that week`
             : 'a week of the season',
         className: 'badge badge--week',
+      }
+    case 'celebration':
+      return {
+        badge: entry.celebrationRank
+          ? CELEBRATION_RANK_LABELS[entry.celebrationRank]
+          : 'Celebration',
+        detail: `${entry.celebrationName || 'Celebration'} — ${
+          entry.celebrationId
+            ? 'follows its calendar date'
+            : entry.celebrationMonth && entry.celebrationDay
+              ? `repeats every year on ${formatAnnualDate(entry.celebrationMonth, entry.celebrationDay)}`
+              : 'annual celebration'
+        }${entry.calendarScope ? ` · ${CALENDAR_SCOPE_LABELS[entry.calendarScope]}` : ''}`,
+        className: 'badge badge--celebration',
       }
     case 'psalter':
     default:
